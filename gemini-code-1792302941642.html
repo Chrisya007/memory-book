@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express Your Memory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #eaddcf;
+            --text-dark: #2c2825;
+            --accent: #d4a373;
+            --border: #c4a993;
+            /* Authentic journal paper color */
+            --book-bg: #f4ecd8;
+            /* Solid masking tape color */
+            --tape-color: #dfcdab; 
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            font-family: 'Lora', serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .cursive { font-family: 'Caveat', cursive; }
+
+        /* Container */
+        #app {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Views */
+        .view { display: none; flex-direction: column; align-items: center; }
+        .view.active { display: flex; }
+
+        /* Home View */
+        #home-view { text-align: center; justify-content: center; min-height: 80vh; background: rgba(255, 255, 255, 0.8); box-shadow: 0 0 40px rgba(0,0,0,0.05); padding: 2rem; max-width: 600px; margin: auto; border-radius: 8px;}
+        #home-view h1 { font-size: 3.5rem; margin-bottom: 0.5rem; line-height: 1.2; }
+        #home-view p { font-size: 1.2rem; color: #666; margin-bottom: 3rem; }
+        
+        button {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            padding: 0.5rem 2rem;
+            background: transparent;
+            border: 2px solid var(--text-dark);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-dark);
+        }
+        button:hover { background: var(--text-dark); color: var(--bg-color); }
+
+        /* Maker View */
+        #maker-view { background: rgba(255, 255, 255, 0.8); padding: 2rem; max-width: 600px; margin: auto; border-radius: 8px;}
+        #pages-container { width: 100%; margin-bottom: 100px; }
+        .page-editor {
+            border: 1px dashed var(--border);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            background: #fff;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        .page-editor .delete-btn {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: #ff4d4d; color: white; border: none;
+            border-radius: 50%; width: 30px; height: 30px;
+            font-size: 1rem; cursor: pointer; padding: 0; z-index: 10;
+        }
+        .img-preview {
+            width: 100%; height: 250px;
+            object-fit: contain; background: #f0f0f0;
+            margin-bottom: 1rem; border: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .img-preview img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .textarea-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        textarea {
+            width: 100%; box-sizing: border-box;
+            font-family: 'Caveat', cursive; font-size: 1.5rem;
+            padding: 1rem; padding-bottom: 2rem; border: 1px solid var(--border);
+            background: transparent; resize: vertical; min-height: 120px;
+        }
+        .char-count {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 1.1rem;
+            font-family: 'Caveat', cursive;
+            color: #888;
+            pointer-events: none;
+        }
+
+        /* Footer Controls */
+        .sticky-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--bg-color);
+            padding: 1rem; display: flex; justify-content: center; gap: 10px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 100;
+            flex-wrap: wrap; border-top: 1px solid var(--border);
+        }
+        .sticky-footer button { font-size: 1.2rem; padding: 0.5rem 1rem; background: #fff;}
+        .sticky-footer button:hover { background: var(--text-dark); color: #fff;}
+
+        /* Viewer View Layout - FIX: Removed display:flex so it hides properly, kept position:fixed */
+        #viewer-view { 
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            width: 100vw; 
+            height: 100vh; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: var(--bg-color);
+        }
+
+        .book-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #book-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Core Book Styles (Using Natural Aspect Ratio) */
+        .book-spread {
+            display: flex;
+            height: 75vh; /* Exactly 6/8 Height */
+            background-color: var(--book-bg);
+            background-image: 
+                linear-gradient(90deg, rgba(0,0,0,0.02) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.02) 100%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+            border-radius: 4px;
+            position: relative;
+            animation: fadeIn 0.4s ease;
+            margin: auto;
+        }
+
+        /* Double Spread Open Book */
+        .book-spread.double {
+            aspect-ratio: 2.8 / 2; /* Natural book ratio */
+            max-width: 87.5vw; /* Keeps it within 14/16 of the screen horizontally */
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+
+        /* The Spine - Locked to absolute center */
+        .book-spread.double::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 8px;
+            background: linear-gradient(to right, rgba(0,0,0,0.15), rgba(0,0,0,0.05), rgba(0,0,0,0.15));
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        /* Single Spread Cover (Perfectly Centered) */
+        .book-spread.single {
+            aspect-ratio: 1.4 / 2; /* Exactly half of double spread */
+            max-width: 43.75vw;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+        }
+        .book-spread.single::after { display: none; }
+
+        /* STRICT 50% PAGES (The Ultimate Fix for Overflow) */
+        .book-page-half {
+            flex: 0 0 50%; 
+            width: 50%;
+            max-width: 50%;
+            min-width: 0; /* CRITICAL: Prevents large images from stretching the page */
+            height: 100%;
+            padding: 2rem 4vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* If it's a single cover page, it takes up 100% of its container */
+        .book-spread.single .book-page-half {
+            flex: 0 0 100%;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        /* Page Crease Shadows (Only in double spread) */
+        .book-spread.double .book-page-half:first-child { box-shadow: inset -15px 0 20px -15px rgba(0,0,0,0.2); }
+        .book-spread.double .book-page-half:last-child { box-shadow: inset 15px 0 20px -15px rgba(0,0,0,0.2); }
+
+        /* Cover Specific Styling */
+        .cover-page {
+            color: #fff;
+            box-shadow: inset 15px 0 20px -15px rgba(0,0,0,0.4) !important;
+            transition: background-color 0.3s ease;
+            background-image: none !important; 
+            border-radius: 4px;
+        }
+        .cover-page h1 {
+            font-size: 5.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            line-height: 1.2;
+            padding: 0 2rem;
+            margin: 0;
+            word-wrap: break-word;
+        }
+
+        /* Image Formatting - Shrink Wrap applied */
+        .image-wrapper {
+            position: relative;
+            display: inline-block; /* HUGS the image tightly */
+            max-width: 100%;
+            margin-bottom: 2rem;
+        }
+        .image-wrapper img {
+            max-width: 100%;
+            max-height: 40vh; 
+            border: 10px solid #fff; 
+            border-bottom-width: 25px; 
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.15);
+            display: block;
+            border-radius: 2px;
+            box-sizing: border-box; 
+        }
+
+        /* OPAQUE MASKING TAPE EFFECT */
+        .tape {
+            position: absolute;
+            width: 95px;
+            height: 28px;
+            background-color: var(--tape-color);
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.03) 50%, rgba(255,255,255,0.1) 100%);
+            box-shadow: 1px 2px 4px rgba(0,0,0,0.15);
+            z-index: 5;
+            clip-path: polygon(2% 0, 98% 0, 100% 10%, 98% 20%, 100% 30%, 98% 40%, 100% 50%, 98% 60%, 100% 70%, 98% 80%, 100% 90%, 98% 100%, 2% 100%, 0 90%, 2% 80%, 0 70%, 2% 60%, 0 50%, 2% 40%, 0 30%, 2% 20%, 0 10%);
+        }
+        
+        /* Tapes attached precisely to corners of the image border */
+        .left-page .tape-1 { top: -10px; left: -15px; transform: rotate(-35deg); }
+        .left-page .tape-2 { bottom: 5px; right: -15px; transform: rotate(-35deg); }
+        .right-page .tape-1 { top: -10px; right: -15px; transform: rotate(35deg); }
+        .right-page .tape-2 { bottom: 5px; left: -15px; transform: rotate(35deg); }
+
+        /* Text Captions */
+        .book-page-half p {
+            font-family: 'Caveat', cursive;
+            font-size: 2.2rem;
+            text-align: center;
+            color: var(--text-dark);
+            line-height: 1.4;
+            max-width: 90%;
+            margin: 0;
+            word-wrap: break-word; /* Prevents long words from breaking the flex container */
+        }
+
+        /* Navigation Buttons - Locked to extreme edges */
+        .nav-btn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--text-dark);
+            color: var(--text-dark);
+            width: 6.25vw; /* Exactly 1/16 */
+            height: 6.25vw;
+            min-width: 45px;
+            min-height: 45px;
+            max-width: 80px;
+            max-height: 80px;
+            font-size: 1.8rem;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .nav-btn:hover { background: var(--text-dark); color: white; }
+        #prev-btn { left: 1.5vw; }
+        #next-btn { right: 1.5vw; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Audio Player */
+        #audio-controls { position: fixed; top: 20px; right: 20px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.15); border: 1px solid var(--border);}
+        .hidden { display: none !important; }
+
+        /* Rotate Notification */
+        #rotate-notice {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(44, 40, 37, 0.95); color: white;
+            z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 1.8rem; text-align: center; padding: 2rem;
+            font-family: 'Caveat', cursive;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .book-spread.double { height: auto; min-height: 80vh; aspect-ratio: auto; width: 90vw; flex-direction: column; }
+            .book-spread.single { height: auto; min-height: 80vh; aspect-ratio: auto; width: 90vw; }
+            .book-spread.double::after { display: none; }
+            .book-page-half { flex: none !important; width: 100% !important; max-width: 100% !important; padding: 2rem; }
+            .book-page-half:first-child, .book-page-half:last-child { box-shadow: none !important; border-bottom: 1px solid rgba(0,0,0,0.05); }
+            .image-wrapper img { max-height: 35vh; border-width: 6px; border-bottom-width: 15px;}
+            .tape { width: 60px; height: 18px; }
+            .book-page-half p { font-size: 1.6rem; }
+            .cover-page h1 { font-size: 4rem; }
+            #prev-btn { left: 5px; }
+            #next-btn { right: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- HOME VIEW -->
+    <div id="home-view" class="view active">
+        <h1 class="cursive">Express Your Memory</h1>
+        <p>with someone special</p>
+        <button onclick="startMaking()">Start Creating</button>
+    </div>
+
+    <!-- MAKER VIEW -->
+    <div id="maker-view" class="view">
+        <h2 class="cursive" style="font-size: 2.5rem; text-align:center;">Edit Your Book</h2>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch;">
+            <input type="text" id="book-title" placeholder="Book Title..." style="flex: 1; font-size:1.5rem; padding:10px; font-family:'Lora'; border:1px solid var(--border); box-sizing: border-box;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border); padding: 5px 15px; border-radius: 4px;">
+                <label for="cover-color" class="cursive" style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-dark);">Cover Color</label>
+                <input type="color" id="cover-color" value="#d4a373" style="cursor: pointer; border: none; width: 40px; height: 30px; padding: 0; background: transparent;">
+            </div>
+        </div>
+        
+        <div id="pages-container"></div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="addPage()" id="add-page-btn" style="padding: 0.5rem 1rem; font-size: 1.2rem;">+ Add Page</button>
+            <p id="page-counter">0/10 Pages Added</p>
+        </div>
+
+        <input type="file" id="music-upload" accept="audio/*" style="display:none;" onchange="handleMusicUpload(event)">
+        
+        <div class="sticky-footer">
+            <button onclick="document.getElementById('music-upload').click()">Add Music (Max 3m)</button>
+            <button onclick="lockAndGenerate()">Done & Generate Link</button>
+        </div>
+    </div>
+
+    <!-- VIEWER VIEW -->
+    <div id="viewer-view" class="view">
+        <!-- Landscape Notification Overlay -->
+        <div id="rotate-notice">
+            <span>📱 Please rotate your device to landscape for the best reading experience. 📖</span>
+        </div>
+
+        <div id="audio-controls" style="display: none;">
+            <audio id="bg-music" controls loop></audio>
+        </div>
+        
+        <div class="book-container">
+            <button id="prev-btn" class="nav-btn" style="display: none;" onclick="turnPage(-1)">◀</button>
+            <div id="book-content"></div>
+            <button id="next-btn" class="nav-btn" style="display: none;" onclick="turnPage(1)">▶</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let pages = [];
+    let musicBase64 = null;
+    let viewerData = null;
+    let currentSpread = 0; 
+
+    const MAX_PAGES = 10;
+    const MAX_AUDIO_TIME = 180;
+
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function startMaking() { showView('maker-view'); addPage(); }
+
+    function addPage() {
+        if (pages.length >= MAX_PAGES) return alert("Maximum 10 pages allowed.");
+        pages.push({ id: Date.now(), image: null, text: "" });
+        renderPages();
+    }
+
+    function removePage(id) {
+        pages = pages.filter(p => p.id !== id);
+        renderPages();
+    }
+
+    function updateText(id, text) {
+        const page = pages.find(p => p.id === id);
+        if (page) page.text = text;
+        
+        const charCount = text.length;
+        const countEl = document.getElementById(`char-count-${id}`);
+        if(countEl) {
+            countEl.innerText = `${charCount}/170 characters`;
+            countEl.style.color = charCount > 170 ? 'red' : '#888';
+        }
+    }
+
+    function handleImageUpload(event, id) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const page = pages.find(p => p.id === id);
+                if (page) { page.image = canvas.toDataURL('image/jpeg', 0.6); renderPages(); }
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleMusicUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const audio = document.createElement('audio');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            audio.src = e.target.result;
+            audio.onloadedmetadata = function() {
+                if (audio.duration > MAX_AUDIO_TIME) {
+                    alert("Music exceeds 3 minutes. Please upload a shorter track.");
+                } else {
+                    musicBase64 = e.target.result;
+                    alert("Music added successfully!");
+                }
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderPages() {
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+        pages.forEach(page => {
+            const charCount = page.text.length;
+            const charColor = charCount > 170 ? 'red' : '#888';
+            
+            container.innerHTML += `
+                <div class="page-editor">
+                    <button class="delete-btn" onclick="removePage(${page.id})">X</button>
+                    <div class="img-preview" onclick="document.getElementById('img-${page.id}').click()">
+                        ${page.image ? `<img src="${page.image}">` : '<span>Click to upload image</span>'}
+                    </div>
+                    <input type="file" id="img-${page.id}" style="display:none;" accept="image/*" onchange="handleImageUpload(event, ${page.id})">
+                    
+                    <div class="textarea-wrapper">
+                        <textarea placeholder="Write a memory..." oninput="updateText(${page.id}, this.value)">${page.text}</textarea>
+                        <div id="char-count-${page.id}" class="char-count" style="color: ${charColor}">${charCount}/170 characters</div>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('page-counter').innerText = `${pages.length}/10 Pages Added`;
+        document.getElementById('add-page-btn').style.display = pages.length >= MAX_PAGES ? 'none' : 'inline-block';
+    }
+
+    function lockAndGenerate() {
+        if (pages.length === 0 || !pages[0].image) return alert("Please add at least one page with an image.");
+        const title = document.getElementById('book-title').value || "Our Memories";
+        const coverColor = document.getElementById('cover-color').value || "#d4a373";
+        
+        const data = { title: title, coverColor: coverColor, pages: pages, music: musicBase64 };
+
+        try {
+            const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+            const url = window.location.origin + window.location.pathname + "#exhibition=" + encoded;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Link Generated & Copied to Clipboard!\n\nYou can now share this link.");
+                window.location.hash = "exhibition=" + encoded;
+                renderViewer();
+            });
+        } catch (e) {
+            alert("Exhibition too large to generate link. Try fewer pages or smaller images.");
+        }
+    }
+
+    function showRotateNotice() {
+        if (window.innerHeight > window.innerWidth) {
+            const notice = document.getElementById('rotate-notice');
+            notice.style.display = 'flex';
+            setTimeout(() => {
+                notice.style.opacity = '0';
+                setTimeout(() => {
+                    notice.style.display = 'none';
+                    notice.style.opacity = '1';
+                }, 500); 
+            }, 2000);
+        }
+    }
+
+    function renderViewer() {
+        const hash = window.location.hash;
+        if (!hash.startsWith('#exhibition=')) return;
+
+        try {
+            viewerData = JSON.parse(decodeURIComponent(atob(hash.split('=')[1])));
+            showView('viewer-view');
+            showRotateNotice();
+
+            if (viewerData.music) {
+                document.getElementById('bg-music').src = viewerData.music;
+                document.getElementById('audio-controls').style.display = 'block';
+            }
+            
+            currentSpread = 0;
+            renderSpread();
+        } catch (e) {
+            alert("Corrupted link. Unable to load exhibition.");
+            showView('home-view');
+        }
+    }
+
+    function turnPage(direction) {
+        const totalSpreads = Math.ceil(viewerData.pages.length / 2);
+        if (currentSpread + direction >= 0 && currentSpread + direction <= totalSpreads) {
+            currentSpread += direction;
+            renderSpread();
+        }
+    }
+
+    function renderSpread() {
+        const container = document.getElementById('book-content');
+        let html = '';
+        
+        if (currentSpread === 0) {
+            html += `
+                <div class="book-spread single">
+                    <div class="book-page-half cover-page" style="background-color: ${viewerData.coverColor || 'var(--accent)'};">
+                        <h1 class="cursive">${viewerData.title}</h1>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += '<div class="book-spread double">';
+            const leftIndex = (currentSpread - 1) * 2;
+            const rightIndex = leftIndex + 1;
+            const leftItem = viewerData.pages[leftIndex];
+            const rightItem = viewerData.pages[rightIndex];
+
+            html += `<div class="book-page-half left-page">`;
+            if (leftItem && leftItem.image) {
+                html += `
+                    <div class="image-wrapper">
+                        <div class="tape tape-1"></div>
+                        <div class="tape tape-2"></div>
+                        <img src="${leftItem.image}">
+                    </div>
+                    <p>${leftItem.text.replace(/\n/g, '<br>')}</p>
+                `;
+            }
+            html += `</div>`;
+
+            html += `<div class="book-page-half right-page">`;
+            if (rightItem && rightItem.image) {
+                html += `
+                    <div class="image-wrapper">
+                        <div class="tape tape-1"></div>
+                        <div class="tape tape-2"></div>
+                        <img src="${rightItem.image}">
+                    </div>
+                    <p>${rightItem.text.replace(/\n/g, '<br>')}</p>
+                `;
+            }
+            html += `</div>`;
+            html += '</div>';
+        }
+        
+        container.innerHTML = html;
+
+        const totalSpreads = Math.ceil(viewerData.pages.length / 2);
+        document.getElementById('prev-btn').style.display = (currentSpread === 0) ? 'none' : 'flex';
+        document.getElementById('next-btn').style.display = (currentSpread >= totalSpreads) ? 'none' : 'flex';
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (document.getElementById('viewer-view').classList.contains('active')) {
+            if (event.key === 'ArrowRight') turnPage(1);
+            else if (event.key === 'ArrowLeft') turnPage(-1);
+        }
+    });
+
+    window.onload = function() {
+        if (window.location.hash.startsWith('#exhibition=')) renderViewer();
+    };
+</script>
+
+</body>
+</html>

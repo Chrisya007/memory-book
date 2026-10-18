@@ -63,7 +63,7 @@
         button:hover { background: var(--text-dark); color: var(--bg-color); }
 
         /* Maker View */
-        #maker-view { background: rgba(255, 255, 255, 0.8); padding: 2rem; max-width: 600px; margin: auto; border-radius: 8px;}
+        #maker-view { background: rgba(255, 255, 255, 0.8); padding: 2rem; max-width: 600px; margin: auto; border-radius: 8px; width: 100%; box-sizing: border-box; }
         #pages-container { width: 100%; margin-bottom: 100px; }
         .page-editor {
             border: 1px dashed var(--border);
@@ -72,6 +72,8 @@
             background: #fff;
             position: relative;
             box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            box-sizing: border-box;
+            width: 100%;
         }
         .page-editor .delete-btn {
             position: absolute;
@@ -119,7 +121,7 @@
         .sticky-footer button { font-size: 1.2rem; padding: 0.5rem 1rem; background: #fff;}
         .sticky-footer button:hover { background: var(--text-dark); color: #fff;}
 
-        /* Viewer View Layout - FIX: Removed display:flex so it hides properly, kept position:fixed */
+        /* Viewer View Layout */
         #viewer-view { 
             position: fixed;
             top: 0;
@@ -127,6 +129,7 @@
             z-index: 1000;
             width: 100vw; 
             height: 100vh; 
+            display: flex;
             justify-content: center; 
             align-items: center; 
             background-color: var(--bg-color);
@@ -149,10 +152,9 @@
             height: 100%;
         }
 
-        /* Core Book Styles (Using Natural Aspect Ratio) */
+        /* Core Book Styles */
         .book-spread {
-            display: flex;
-            height: 75vh; /* Exactly 6/8 Height */
+            height: 75vh; 
             background-color: var(--book-bg);
             background-image: 
                 linear-gradient(90deg, rgba(0,0,0,0.02) 0%, transparent 5%, transparent 95%, rgba(0,0,0,0.02) 100%),
@@ -163,14 +165,15 @@
             margin: auto;
         }
 
-        /* Double Spread Open Book */
+        /* DOUBLE SPREAD */
         .book-spread.double {
-            aspect-ratio: 2.8 / 2; /* Natural book ratio */
-            max-width: 87.5vw; /* Keeps it within 14/16 of the screen horizontally */
+            display: flex;
+            width: 87.5vw; 
+            max-width: 1400px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
 
-        /* The Spine - Locked to absolute center */
+        /* The Spine */
         .book-spread.double::after {
             content: '';
             position: absolute;
@@ -183,20 +186,18 @@
             z-index: 10;
         }
 
-        /* Single Spread Cover (Perfectly Centered) */
+        /* SINGLE SPREAD */
         .book-spread.single {
-            aspect-ratio: 1.4 / 2; /* Exactly half of double spread */
-            max-width: 43.75vw;
+            display: flex;
+            width: 43.75vw;
+            max-width: 700px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
-        .book-spread.single::after { display: none; }
 
-        /* STRICT 50% PAGES (The Ultimate Fix for Overflow) */
+        /* The Pages */
         .book-page-half {
-            flex: 0 0 50%; 
-            width: 50%;
-            max-width: 50%;
-            min-width: 0; /* CRITICAL: Prevents large images from stretching the page */
+            flex: 1; 
+            min-width: 0; 
             height: 100%;
             padding: 2rem 4vw;
             display: flex;
@@ -208,14 +209,11 @@
             box-sizing: border-box;
         }
 
-        /* If it's a single cover page, it takes up 100% of its container */
         .book-spread.single .book-page-half {
-            flex: 0 0 100%;
-            max-width: 100%;
             width: 100%;
         }
 
-        /* Page Crease Shadows (Only in double spread) */
+        /* Page Crease Shadows */
         .book-spread.double .book-page-half:first-child { box-shadow: inset -15px 0 20px -15px rgba(0,0,0,0.2); }
         .book-spread.double .book-page-half:last-child { box-shadow: inset 15px 0 20px -15px rgba(0,0,0,0.2); }
 
@@ -226,6 +224,7 @@
             transition: background-color 0.3s ease;
             background-image: none !important; 
             border-radius: 4px;
+            width: 100%;
         }
         .cover-page h1 {
             font-size: 5.5rem;
@@ -237,16 +236,19 @@
             word-wrap: break-word;
         }
 
-        /* Image Formatting - Shrink Wrap applied */
+        /* Image Formatting */
         .image-wrapper {
             position: relative;
-            display: inline-block; /* HUGS the image tightly */
-            max-width: 100%;
+            display: inline-block; 
+            max-width: 100%; 
             margin-bottom: 2rem;
         }
         .image-wrapper img {
-            max-width: 100%;
+            max-width: 100%; 
             max-height: 40vh; 
+            width: auto;
+            height: auto;
+            object-fit: contain; 
             border: 10px solid #fff; 
             border-bottom-width: 25px; 
             box-shadow: 2px 4px 12px rgba(0,0,0,0.15);
@@ -258,8 +260,8 @@
         /* OPAQUE MASKING TAPE EFFECT */
         .tape {
             position: absolute;
-            width: 95px;
-            height: 28px;
+            width: 85px;
+            height: 25px;
             background-color: var(--tape-color);
             background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.03) 50%, rgba(255,255,255,0.1) 100%);
             box-shadow: 1px 2px 4px rgba(0,0,0,0.15);
@@ -267,7 +269,6 @@
             clip-path: polygon(2% 0, 98% 0, 100% 10%, 98% 20%, 100% 30%, 98% 40%, 100% 50%, 98% 60%, 100% 70%, 98% 80%, 100% 90%, 98% 100%, 2% 100%, 0 90%, 2% 80%, 0 70%, 2% 60%, 0 50%, 2% 40%, 0 30%, 2% 20%, 0 10%);
         }
         
-        /* Tapes attached precisely to corners of the image border */
         .left-page .tape-1 { top: -10px; left: -15px; transform: rotate(-35deg); }
         .left-page .tape-2 { bottom: 5px; right: -15px; transform: rotate(-35deg); }
         .right-page .tape-1 { top: -10px; right: -15px; transform: rotate(35deg); }
@@ -282,10 +283,10 @@
             line-height: 1.4;
             max-width: 90%;
             margin: 0;
-            word-wrap: break-word; /* Prevents long words from breaking the flex container */
+            word-wrap: break-word; 
         }
 
-        /* Navigation Buttons - Locked to extreme edges */
+        /* Navigation Buttons */
         .nav-btn {
             position: fixed;
             top: 50%;
@@ -293,7 +294,7 @@
             background: rgba(255, 255, 255, 0.95);
             border: 2px solid var(--text-dark);
             color: var(--text-dark);
-            width: 6.25vw; /* Exactly 1/16 */
+            width: 6.25vw; 
             height: 6.25vw;
             min-width: 45px;
             min-height: 45px;
@@ -333,12 +334,15 @@
             transition: opacity 0.5s ease;
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 768px) {
-            .book-spread.double { height: auto; min-height: 80vh; aspect-ratio: auto; width: 90vw; flex-direction: column; }
-            .book-spread.single { height: auto; min-height: 80vh; aspect-ratio: auto; width: 90vw; }
+        /* ========================================= */
+        /* MOBILE FIX 1: VERTICAL PORTRAIT MODE ONLY */
+        /* ========================================= */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #app { padding: 1rem; }
+            .book-spread.double { display: flex; flex-direction: column; height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; }
+            .book-spread.single { height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; }
             .book-spread.double::after { display: none; }
-            .book-page-half { flex: none !important; width: 100% !important; max-width: 100% !important; padding: 2rem; }
+            .book-page-half { width: 100% !important; padding: 2rem; }
             .book-page-half:first-child, .book-page-half:last-child { box-shadow: none !important; border-bottom: 1px solid rgba(0,0,0,0.05); }
             .image-wrapper img { max-height: 35vh; border-width: 6px; border-bottom-width: 15px;}
             .tape { width: 60px; height: 18px; }
@@ -346,6 +350,32 @@
             .cover-page h1 { font-size: 4rem; }
             #prev-btn { left: 5px; }
             #next-btn { right: 5px; }
+        }
+
+        /* ========================================= */
+        /* MOBILE FIX 2: LANDSCAPE (SIDEWAYS) MODE   */
+        /* ========================================= */
+        @media (max-height: 600px) and (orientation: landscape) {
+            #app { padding: 1rem; }
+            .book-spread { height: 90vh; } /* Stretches the book taller to fill the short horizontal screen */
+            .book-spread.double { width: 95vw; } 
+            .book-spread.single { width: 47.5vw; }
+            .book-page-half { padding: 1rem 2vw; }
+            .image-wrapper img { max-height: 55vh; border-width: 6px; border-bottom-width: 15px; } /* Lets the image grow larger! */
+            .book-page-half p { font-size: 1.4rem; margin-top: 5px; }
+            .cover-page h1 { font-size: 3rem; padding: 0 1rem; }
+            
+            /* Smaller navigation arrows so they don't block the screen */
+            .nav-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 1.2rem; }
+            #prev-btn { left: 5px; }
+            #next-btn { right: 5px; }
+            
+            /* Slightly smaller tapes for small landscape screens */
+            .tape { width: 50px; height: 16px; }
+            .left-page .tape-1 { top: -6px; left: -10px; }
+            .left-page .tape-2 { bottom: 3px; right: -10px; }
+            .right-page .tape-1 { top: -6px; right: -10px; }
+            .right-page .tape-2 { bottom: 3px; left: -10px; }
         }
     </style>
 </head>
@@ -363,9 +393,10 @@
     <div id="maker-view" class="view">
         <h2 class="cursive" style="font-size: 2.5rem; text-align:center;">Edit Your Book</h2>
         
-        <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: stretch;">
-            <input type="text" id="book-title" placeholder="Book Title..." style="flex: 1; font-size:1.5rem; padding:10px; font-family:'Lora'; border:1px solid var(--border); box-sizing: border-box;">
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border); padding: 5px 15px; border-radius: 4px;">
+        <!-- TITLE FIX: Added flex-wrap: wrap so input and color picker don't push off screen -->
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: stretch;">
+            <input type="text" id="book-title" placeholder="Book Title..." style="flex: 1; min-width: 200px; font-size:1.5rem; padding:10px; font-family:'Lora'; border:1px solid var(--border); box-sizing: border-box;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border); padding: 5px 15px; border-radius: 4px; box-sizing: border-box;">
                 <label for="cover-color" class="cursive" style="font-size: 1.2rem; margin-bottom: 5px; color: var(--text-dark);">Cover Color</label>
                 <input type="color" id="cover-color" value="#d4a373" style="cursor: pointer; border: none; width: 40px; height: 30px; padding: 0; background: transparent;">
             </div>

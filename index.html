@@ -11,9 +11,7 @@
             --text-dark: #2c2825;
             --accent: #d4a373;
             --border: #c4a993;
-            /* Authentic journal paper color */
             --book-bg: #f4ecd8;
-            /* Solid masking tape color */
             --tape-color: #dfcdab; 
         }
         
@@ -129,7 +127,7 @@
             z-index: 1000;
             width: 100vw; 
             height: 100vh; 
-            display: flex;
+            /* THE FIX: NO 'display: flex' HERE! It inherits correctly now. */
             justify-content: center; 
             align-items: center; 
             background-color: var(--bg-color);
@@ -357,8 +355,8 @@
         /* ========================================= */
         @media (max-height: 600px) and (orientation: landscape) {
             #app { padding: 1rem; }
-            .book-spread { height: 90vh; } /* Stretches the book taller to fill the short horizontal screen */
-            .book-spread.double { width: 95vw; } 
+            .book-spread { height: 85vh; } /* Stretches the book taller to fill the short horizontal screen */
+            .book-spread.double { width: 95vw; flex-direction: row; } 
             .book-spread.single { width: 47.5vw; }
             .book-page-half { padding: 1rem 2vw; }
             .image-wrapper img { max-height: 55vh; border-width: 6px; border-bottom-width: 15px; } /* Lets the image grow larger! */

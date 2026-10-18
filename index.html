@@ -119,7 +119,7 @@
         .sticky-footer button { font-size: 1.2rem; padding: 0.5rem 1rem; background: #fff;}
         .sticky-footer button:hover { background: var(--text-dark); color: #fff;}
 
-        /* Viewer View Layout */
+        /* Viewer View Layout (Fixed Centering) */
         #viewer-view { 
             position: fixed;
             top: 0;
@@ -127,7 +127,6 @@
             z-index: 1000;
             width: 100vw; 
             height: 100vh; 
-            /* THE FIX: NO 'display: flex' HERE! It inherits correctly now. */
             justify-content: center; 
             align-items: center; 
             background-color: var(--bg-color);
@@ -150,7 +149,7 @@
             height: 100%;
         }
 
-        /* Core Book Styles */
+        /* Core Book Styles (Restored Beautiful Ratio) */
         .book-spread {
             height: 75vh; 
             background-color: var(--book-bg);
@@ -163,11 +162,12 @@
             margin: auto;
         }
 
-        /* DOUBLE SPREAD */
+        /* STRICT GRID DOUBLE SPREAD: Keeps perfect book proportions */
         .book-spread.double {
-            display: flex;
-            width: 87.5vw; 
-            max-width: 1400px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); 
+            aspect-ratio: 2.8 / 2; 
+            max-width: 87.5vw; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
 
@@ -184,19 +184,20 @@
             z-index: 10;
         }
 
-        /* SINGLE SPREAD */
+        /* Single Spread Cover (Perfectly Centered Ratio) */
         .book-spread.single {
             display: flex;
-            width: 43.75vw;
-            max-width: 700px;
+            aspect-ratio: 1.4 / 2; 
+            max-width: 43.75vw;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
+        .book-spread.single::after { display: none; }
 
         /* The Pages */
         .book-page-half {
-            flex: 1; 
-            min-width: 0; 
+            width: 100%;
             height: 100%;
+            min-width: 0; 
             padding: 2rem 4vw;
             display: flex;
             flex-direction: column;
@@ -237,7 +238,9 @@
         /* Image Formatting */
         .image-wrapper {
             position: relative;
-            display: inline-block; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
             max-width: 100%; 
             margin-bottom: 2rem;
         }
@@ -258,8 +261,8 @@
         /* OPAQUE MASKING TAPE EFFECT */
         .tape {
             position: absolute;
-            width: 85px;
-            height: 25px;
+            width: 95px;
+            height: 28px;
             background-color: var(--tape-color);
             background-image: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.03) 50%, rgba(255,255,255,0.1) 100%);
             box-shadow: 1px 2px 4px rgba(0,0,0,0.15);
@@ -337,8 +340,8 @@
         /* ========================================= */
         @media (max-width: 768px) and (orientation: portrait) {
             #app { padding: 1rem; }
-            .book-spread.double { display: flex; flex-direction: column; height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; }
-            .book-spread.single { height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; }
+            .book-spread.double { display: flex; flex-direction: column; height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; max-width: 92vw; }
+            .book-spread.single { height: auto; min-height: 80vh; aspect-ratio: auto; width: 92vw; max-width: 92vw; }
             .book-spread.double::after { display: none; }
             .book-page-half { width: 100% !important; padding: 2rem; }
             .book-page-half:first-child, .book-page-half:last-child { box-shadow: none !important; border-bottom: 1px solid rgba(0,0,0,0.05); }
@@ -355,20 +358,18 @@
         /* ========================================= */
         @media (max-height: 600px) and (orientation: landscape) {
             #app { padding: 1rem; }
-            .book-spread { height: 85vh; } /* Stretches the book taller to fill the short horizontal screen */
-            .book-spread.double { width: 95vw; flex-direction: row; } 
-            .book-spread.single { width: 47.5vw; }
+            .book-spread { height: 85vh; }
+            .book-spread.double { display: grid; aspect-ratio: 2.8 / 2; max-width: 95vw; } 
+            .book-spread.single { aspect-ratio: 1.4 / 2; max-width: 47.5vw; }
             .book-page-half { padding: 1rem 2vw; }
-            .image-wrapper img { max-height: 55vh; border-width: 6px; border-bottom-width: 15px; } /* Lets the image grow larger! */
+            .image-wrapper img { max-height: 55vh; border-width: 6px; border-bottom-width: 15px; } 
             .book-page-half p { font-size: 1.4rem; margin-top: 5px; }
             .cover-page h1 { font-size: 3rem; padding: 0 1rem; }
             
-            /* Smaller navigation arrows so they don't block the screen */
             .nav-btn { width: 40px; height: 40px; min-width: 40px; min-height: 40px; font-size: 1.2rem; }
             #prev-btn { left: 5px; }
             #next-btn { right: 5px; }
             
-            /* Slightly smaller tapes for small landscape screens */
             .tape { width: 50px; height: 16px; }
             .left-page .tape-1 { top: -6px; left: -10px; }
             .left-page .tape-2 { bottom: 3px; right: -10px; }
@@ -391,7 +392,6 @@
     <div id="maker-view" class="view">
         <h2 class="cursive" style="font-size: 2.5rem; text-align:center;">Edit Your Book</h2>
         
-        <!-- TITLE FIX: Added flex-wrap: wrap so input and color picker don't push off screen -->
         <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: stretch;">
             <input type="text" id="book-title" placeholder="Book Title..." style="flex: 1; min-width: 200px; font-size:1.5rem; padding:10px; font-family:'Lora'; border:1px solid var(--border); box-sizing: border-box;">
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--border); padding: 5px 15px; border-radius: 4px; box-sizing: border-box;">
@@ -417,7 +417,6 @@
 
     <!-- VIEWER VIEW -->
     <div id="viewer-view" class="view">
-        <!-- Landscape Notification Overlay -->
         <div id="rotate-notice">
             <span>📱 Please rotate your device to landscape for the best reading experience. 📖</span>
         </div>
